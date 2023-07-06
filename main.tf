@@ -17,7 +17,7 @@ data "aws_ami" "amazon-linux" {
 }
 
 variable "ssh_private_key_file" {
-  default = "files/jenkins-aws.pem"
+  default = "/var/tmp/jenkins-aws.pem"
 }
 
 locals {
