@@ -16,6 +16,14 @@ data "aws_ami" "amazon-linux" {
   }
 }
 
+variable "ssh_private_key_file" {
+  default = "files/jenkins-aws.pem"
+}
+
+locals {
+  ssh_private_key_content = file(var.ssh_private_key_file)
+}
+
 resource "aws_instance" "myInstanceAWS" {
   ami = data.aws_ami.amazon-linux.id
   instance_type = "t2.micro"
@@ -59,7 +67,7 @@ resource "null_resource" "ProvisionRemoteHostsIpToAnsibleHosts" {
     type = "ssh"
     user = "ec2-user"
     host = aws_instance.myInstanceAWS.public_ip
-    private_key = file("~/.ssh/Jenkins-Server.pem")
+    private_key = local.ssh_private_key_content
   }
   provisioner "remote-exec" {
     inline = [
