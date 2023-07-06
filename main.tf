@@ -35,18 +35,6 @@ resource "aws_instance" "myInstanceAWS" {
   }
 }
 
-# data  "template_file" "hosts" {
-#     template = "${file("./templates/hosts.tpl")}"
-#     vars {
-#         hosts_ips = "${join("\n", aws_instance.terr-ansible-host.public_ip)}"
-#     }
-# }
-
-resource "local_file" "key_file" {
-  content  = local.ssh_private_key_content
-  filename = "./Jenkins-Server.pem"
-}
-
 resource "null_resource" "ConfigureAnsibleLabelVariable" {
   provisioner "local-exec" {
     command = "echo [webserver:vars] > hosts"
@@ -77,6 +65,22 @@ resource "null_resource" "ProvisionRemoteHostsIpToAnsibleHosts" {
       "sudo pip install httplib2"
     ]
   }
+  provisioner "file" {
+    source      = "/var/tmp/Jenkins-Server.pem"
+    destination = "/home/ec2-user/.ssh/cloudtls.pem"
+    on_failure  = fail
+
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "cd ~/.ssh",
+      "sudo chmod 600 *.pem",
+      "echo -e 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\ntIdentityFile /home/ec2-user/.ssh/Jenkins-Server.pem' > config",
+    ]
+    on_failure = fail
+  }
+  
   provisioner "local-exec" {
     command = "echo ${aws_instance.myInstanceAWS.public_ip} >> hosts"
   }
