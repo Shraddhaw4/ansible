@@ -13,11 +13,9 @@ pipeline {
         stage('Provision Infrastructure') {
         steps {
             // credentialsId loading private key and storing in var
-            withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'PRI_KEY',
-                    keyFileVariable: 'SSH_KEY'
-                    ]])
+            withCredentials([sshUserPrivateKey(
+                credentialsId: 'PRI_KEY',
+                keyFileVariable: 'SSH_KEY')])
             {
                 sh 'cp "$SSH_KEY" /var/tmp/jenkins-aws.pem'
             }
