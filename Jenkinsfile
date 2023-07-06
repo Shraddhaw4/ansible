@@ -6,10 +6,21 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        Private_Key_File = credentials('AWS_KEY')
     }
 
    agent  any
     stages {
+        stage('Provision Infrastructure') {
+        steps {
+            // credentialsId loading private key and storing in var
+            withCredentials([sshUserPrivateKey(
+                credentialsId: 'AWS_PRI_KEY')])
+            {
+                sh 'cp "$SSH_KEY" files/jenkins-aws.pem'
+            }
+        }
+        }
         stage('checkout') {
             steps {
                  script{
