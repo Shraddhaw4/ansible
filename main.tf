@@ -78,6 +78,7 @@ resource "null_resource" "ProvisionRemoteHostsIpToAnsibleHosts" {
       "sudo pip install httplib2",
       "cd ~/.ssh",
       "sudo chmod 600 *.pem",
+      "touch config",
       "echo -e 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\ntIdentityFile /home/ec2-user/.ssh/Jenkins-Server.pem' > config",
     ]
   }
