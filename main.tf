@@ -16,6 +16,7 @@ data "aws_ami" "amazon-linux" {
   }
 }
 
+
 variable "ssh_private_key_file" {
   default = "/var/tmp/Jenkins-Server.pem"
 }
@@ -27,7 +28,7 @@ locals {
 resource "aws_instance" "myInstanceAWS" {
   ami = data.aws_ami.amazon-linux.id
   instance_type = "t2.micro"
-  key_name = var.ssh_private_key_file
+  key_name = local_file.key_file.filename
 
   tags = {
     Name = "terr-ansible-host"
@@ -41,10 +42,10 @@ resource "aws_instance" "myInstanceAWS" {
 #     }
 # }
 
-# resource "local_file" "hosts_file" {
-#   content  = "${data.template_file.hosts.rendered}"
-#   filename = "./inventory/hosts"
-# }
+resource "local_file" "key_file" {
+  content  = local.ssh_private_key_content
+  filename = "./Jenkins-Server.pem"
+}
 
 resource "null_resource" "ConfigureAnsibleLabelVariable" {
   provisioner "local-exec" {
