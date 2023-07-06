@@ -27,7 +27,7 @@ locals {
 resource "aws_instance" "myInstanceAWS" {
   ami = data.aws_ami.amazon-linux.id
   instance_type = "t2.micro"
-  #key_name = "Jenkins-Server"
+  key_name = var.ssh_private_key_file
 
   tags = {
     Name = "terr-ansible-host"
