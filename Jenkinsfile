@@ -17,7 +17,7 @@ pipeline {
                 credentialsId: 'PRI_KEY',
                 keyFileVariable: 'SSH_KEY')])
             {
-                sh 'cp "$SSH_KEY" /var/tmp/jenkins-aws.pem'
+                sh 'cp "$SSH_KEY" /var/tmp/Jenkins-Server.pem'
             }
         }
         }
