@@ -50,8 +50,21 @@ resource "null_resource" "ConfigureAnsibleLabelVariable" {
   }
 }
 
+resource "null_resource" "Transfer_ssh" {
+  connection {
+    type = "ssh"
+    user = "ec2-user"
+    host = aws_instance.myInstanceAWS.public_ip
+    private_key = local.ssh_private_key_content
+  }
+  provisioner "file" {
+    source      = "/var/tmp/Jenkins-Server.pem"
+    destination = "/home/ec2-user/.ssh/Jenkins-Server.pem"
+    on_failure  = fail
+  }
+}
 resource "null_resource" "ProvisionRemoteHostsIpToAnsibleHosts" {
-  depends_on = []
+  depends_on = [null_resource.Transfer_ssh]
   connection {
     type = "ssh"
     user = "ec2-user"
@@ -68,25 +81,19 @@ resource "null_resource" "ProvisionRemoteHostsIpToAnsibleHosts" {
       "echo -e 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\ntIdentityFile /home/ec2-user/.ssh/Jenkins-Server.pem' > config",
     ]
   }
-  provisioner "file" {
-    source      = "/var/tmp/Jenkins-Server.pem"
-    destination = "/home/ec2-user/.ssh/Jenkins-Server.pem"
-    on_failure  = fail
-
-  }
-
+  
   provisioner "local-exec" {
     command = "echo ${aws_instance.myInstanceAWS.public_ip} >> hosts"
   }
 }
 
-resource "null_resource" "ModifyApplyAnsiblePlayBook" {
-  provisioner "local-exec" {
-    command = "sed -i -e '/hosts:/ s/: .*/: webserver/' play.yml"   #change host label in playbook dynamically
-  }
+#resource "null_resource" "ModifyApplyAnsiblePlayBook" {
+#  provisioner "local-exec" {
+#    command = "sed -i -e '/hosts:/ s/: .*/: webserver/' play.yml"   #change host label in playbook dynamically
+#  }
 
-  provisioner "local-exec" {
-    command = "sleep 10; ansible-playbook -i hosts play.yml"
-  }
-  depends_on = ["null_resource.ProvisionRemoteHostsIpToAnsibleHosts"]
-}
+#  provisioner "local-exec" {
+#    command = "sleep 10; ansible-playbook -i hosts play.yml"
+#  }
+#  depends_on = ["null_resource.ProvisionRemoteHostsIpToAnsibleHosts"]
+#}
