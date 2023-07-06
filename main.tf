@@ -62,25 +62,19 @@ resource "null_resource" "ProvisionRemoteHostsIpToAnsibleHosts" {
     inline = [
       "sudo yum update -y",
       "sudo yum install python-setuptools python-pip -y",
-      "sudo pip install httplib2"
-    ]
-  }
-  provisioner "file" {
-    source      = "/var/tmp/Jenkins-Server.pem"
-    destination = "/home/ec2-user/.ssh/cloudtls.pem"
-    on_failure  = fail
-
-  }
-
-  provisioner "remote-exec" {
-    inline = [
+      "sudo pip install httplib2",
       "cd ~/.ssh",
       "sudo chmod 600 *.pem",
       "echo -e 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\ntIdentityFile /home/ec2-user/.ssh/Jenkins-Server.pem' > config",
     ]
-    on_failure = fail
   }
-  
+  provisioner "file" {
+    source      = "/var/tmp/Jenkins-Server.pem"
+    destination = "/home/ec2-user/.ssh/Jenkins-Server.pem"
+    on_failure  = fail
+
+  }
+
   provisioner "local-exec" {
     command = "echo ${aws_instance.myInstanceAWS.public_ip} >> hosts"
   }
