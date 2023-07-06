@@ -8,7 +8,7 @@ terraform {
 
 provider "aws" {
   region                   = "ap-south-1"
-  profile                  = "terraformp"
+  #profile                  = "terraformp"
 }
 
 data "aws_ami" "amazon-linux" {
