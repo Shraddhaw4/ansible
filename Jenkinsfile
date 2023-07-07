@@ -59,6 +59,7 @@ pipeline {
         stage('Apply') {
             steps {
                 sh "pwd;cd terraform/ ; terraform apply -input=false tfplan"
+                sh "sudo cp /var/tmp/config /home/ubuntu/.ssh
             }
         }
     }
