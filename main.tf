@@ -34,7 +34,7 @@ resource "null_resource" "key" {
 resource "null_resource" "inventory" {
   provisioner "local-exec" {
     on_failure  = fail
-    command = "echo '[servers]' > /home/ubuntu/hosts"
+    command = "echo '[servers]' > /home/hosts"
   }
 }
 #---------------Passwordless SSH----------------------------------
@@ -42,7 +42,7 @@ resource "null_resource" "Transfer_ssh" {
   depends_on = [null_resource.key]
   provisioner "local-exec" {
     on_failure = fail
-    command = "cd ~/.ssh"
+    command = "sudo cd ~/.ssh"
   }
   provisioner "local-exec" {
     on_failure = fail
@@ -50,7 +50,7 @@ resource "null_resource" "Transfer_ssh" {
   }
   provisioner "local-exec" {
     on_failure = fail
-    command = "echo 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\n\tIdentityFile /home/ubuntu/.ssh/Jenkins-Server.pem' > config"
+    command = "sudo echo 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\n\tIdentityFile /home/ubuntu/.ssh/Jenkins-Server.pem' > /home/ubuntu/.ssh/config"
   }
 }
 #-----------------Ansibe Host---------------------------------------
