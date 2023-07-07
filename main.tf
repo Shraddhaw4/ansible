@@ -38,21 +38,21 @@ resource "null_resource" "inventory" {
   }
 }
 #---------------Passwordless SSH----------------------------------
-resource "null_resource" "Transfer_ssh" {
+resource "null_resource" "Transfer_ssh1" {
   depends_on = [null_resource.key]
-  provisioner "local-exec" {
-    on_failure = fail
-    command = "cd /home/ubuntu/.ssh"
-  }
-  provisioner "local-exec" {
-    on_failure = fail
-    command = "sudo chmod 600 *.pem"
-  }
   provisioner "local-exec" {
     on_failure = fail
     command = "sudo echo 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\n\tIdentityFile /home/ubuntu/.ssh/Jenkins-Server.pem' > config"
   }
 }
+resource "null_resource" "Transfer_ssh2" {
+  depends_on = [null_resource.Transfer_ssh1]
+  provisioner "local-exec" {
+    on_failure = fail
+    command = "sudo cp config /home/ubuntu/.ssh/config"
+  }
+}
+
 #-----------------Ansibe Host---------------------------------------
 resource "aws_instance" "ansible-hosts" {
   ami = data.aws_ami.ubuntu-ami.id
