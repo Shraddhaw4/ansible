@@ -42,7 +42,7 @@ resource "null_resource" "Transfer_ssh" {
   depends_on = [null_resource.key]
   provisioner "local-exec" {
     on_failure = fail
-    command = "cd /home/ubuntu/.ssh/"
+    command = "cd /home/ubuntu/.ssh"
   }
   provisioner "local-exec" {
     on_failure = fail
