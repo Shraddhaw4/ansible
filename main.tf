@@ -34,11 +34,12 @@ resource "null_resource" "key" {
 resource "null_resource" "inventory" {
   provisioner "local-exec" {
     on_failure  = fail
-    command = "echo '[servers]' > hosts"
+    command = "echo '[servers]' > /home/ubuntu/hosts"
   }
 }
 #---------------Passwordless SSH----------------------------------
 resource "null_resource" "Transfer_ssh" {
+  depends_on = [null_resource.key]
   provisioner "local-exec" {
     on_failure = fail
     command = "cd ~/.ssh"
@@ -67,12 +68,12 @@ resource "null_resource" "inventory-file" {
   depends_on = [aws_instance.ansible-hosts]
   provisioner "local-exec" {
     on_failure = fail
-    command = "echo ${aws_instance.ansible-hosts.tags["Name"]} ansible_host=${aws_instance.ansible-hosts.public_ip} ansible_connection=ssh ansible_user=ubuntu >> hosts"
+    command = "echo ${aws_instance.ansible-hosts.tags["Name"]} ansible_host=${aws_instance.ansible-hosts.public_ip} ansible_connection=ssh ansible_user=ubuntu >> /home/ubuntu/hosts"
   }
 }
 #--------------Ping--------------------------------------------------
 resource "null_resource" "ping" {
-  depends_on = [null_resource.inventory]
+  depends_on = [null_resource.inventory-file]
   provisioner "local-exec" {
     on_failure = fail
     command = "ansible servers -m ping -i hosts"
