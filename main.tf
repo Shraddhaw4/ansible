@@ -1,32 +1,54 @@
+#------------------Provider Info--------------------------------
 provider "aws" {
   region                   = "ap-south-1"
   #profile                  = "terraformp"
 }
-
-data "aws_ami" "amazon-linux" {
+#-----------------Fetching Ubuntu AMI---------------------------
+data "aws_ami" "ubuntu-ami" {
   most_recent = true
 
   filter {
     name = "name"
-    values = ["amzn2-ami-kernel-5.10-hvm-*-x86_64-gp2"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20230516"]
   }
   filter {
     name = "virtualization-type"
     values = ["hvm"]
   }
 }
-
-
+#-----------------Private Key File------------------------------
 variable "ssh_private_key_file" {
-  default = "/var/tmp/Jenkins-Server.pem"
+  default = "/home/ubuntu/.ssh/Jenkins-Server.pem"
 }
 
 locals {
   ssh_private_key_content = file(var.ssh_private_key_file)
 }
-
-resource "aws_instance" "myInstanceAWS" {
-  ami = data.aws_ami.amazon-linux.id
+#---------------Creating Inventory-------------------------------
+resource "null_resource" "inventory" {
+  provisioner "local-exec" {
+    on_failure  = fail
+    command = "echo '[servers]' > hosts"
+  }
+}
+#---------------Passwordless SSH----------------------------------
+resource "null_resource" "Transfer_ssh" {
+  provisioner "local-exec" {
+    on_failure = fail
+    command = "cd ~/.ssh"
+  }
+  provisioner "local-exec" {
+    on_failure = fail
+    command = "sudo chmod 600 *.pem"
+  }
+  provisioner "local-exec" {
+    on_failure = fail
+    command = "echo 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\n\tIdentityFile /home/ubuntu/.ssh/Jenkins-Server.pem' > config"
+  }
+}
+#-----------------Ansibe Host---------------------------------------
+resource "aws_instance" "ansible-hosts" {
+  ami = data.aws_ami.ubuntu-ami.id
   instance_type = "t2.micro"
   key_name = "Jenkins-Server"
 
@@ -34,67 +56,19 @@ resource "aws_instance" "myInstanceAWS" {
     Name = "terr-ansible-host"
   }
 }
-
-resource "null_resource" "ConfigureAnsibleLabelVariable" {
+#----------------Inventory File--------------------------------------
+resource "null_resource" "inventory" {
+  depends_on = [aws_instance.ansible-hosts]
   provisioner "local-exec" {
-    command = "echo [webserver:vars] > hosts"
-  }
-  provisioner "local-exec" {
-    command = "echo ansible_ssh_user=ec2-user >> hosts"
-  }
-  provisioner "local-exec" {
-    command = "echo ansible_ssh_private_key_file=Jenkins-Server.pem >> hosts"
-  }
-  provisioner "local-exec" {
-    command = "echo [webserver] >> hosts"
+    on_failure = fail
+    command = "echo ${aws_instance.ansible-hosts.tags["Name"]} ansible_host=${aws_instance.ansible-hosts.public_ip} ansible_connection=ssh ansible_user=ubuntu >> hosts"
   }
 }
-
-resource "null_resource" "Transfer_ssh" {
-  connection {
-    type = "ssh"
-    user = "ec2-user"
-    host = aws_instance.myInstanceAWS.public_ip
-    private_key = local.ssh_private_key_content
-  }
-  provisioner "file" {
-    source      = "/var/tmp/Jenkins-Server.pem"
-    destination = "/home/ec2-user/.ssh/Jenkins-Server.pem"
-    on_failure  = fail
-  }
-}
-resource "null_resource" "ProvisionRemoteHostsIpToAnsibleHosts" {
-  depends_on = [null_resource.Transfer_ssh]
-  connection {
-    type = "ssh"
-    user = "ec2-user"
-    host = aws_instance.myInstanceAWS.public_ip
-    private_key = local.ssh_private_key_content
-  }
-  provisioner "remote-exec" {
-    inline = [
-      "sudo yum update -y",
-      "sudo yum install python-setuptools python-pip -y",
-      "sudo pip install httplib2",
-      "cd ~/.ssh",
-      "sudo chmod 600 *.pem",
-      "touch config",
-      "echo -e 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\ntIdentityFile /home/ec2-user/.ssh/Jenkins-Server.pem' > config",
-    ]
-  }
-  
+#--------------Ping--------------------------------------------------
+resource "null_resource" "ping" {
+  depends_on = [null_resource.inventory]
   provisioner "local-exec" {
-    command = "echo ${aws_instance.myInstanceAWS.public_ip} >> hosts"
+    on_failure = fail
+    command = "ansible servers -m ping -i hosts"
   }
 }
-
-#resource "null_resource" "ModifyApplyAnsiblePlayBook" {
-#  provisioner "local-exec" {
-#    command = "sed -i -e '/hosts:/ s/: .*/: webserver/' play.yml"   #change host label in playbook dynamically
-#  }
-
-#  provisioner "local-exec" {
-#    command = "sleep 10; ansible-playbook -i hosts play.yml"
-#  }
-#  depends_on = ["null_resource.ProvisionRemoteHostsIpToAnsibleHosts"]
-#}
