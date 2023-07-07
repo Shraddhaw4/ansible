@@ -18,11 +18,17 @@ data "aws_ami" "ubuntu-ami" {
 }
 #-----------------Private Key File------------------------------
 variable "ssh_private_key_file" {
-  default = "/home/ubuntu/.ssh/Jenkins-Server.pem"
+  default = "/var/tmp/Jenkins-Server.pem"
 }
 
 locals {
   ssh_private_key_content = file(var.ssh_private_key_file)
+}
+resource "null_resource" "key" {
+  provisioner "local-exec" {
+    on_failure  = fail
+    command = "sudo cp /var/tmp/Jenkins-Server.pem /home/ubuntu/.ssh/Jenkins-Server.pem"
+  }
 }
 #---------------Creating Inventory-------------------------------
 resource "null_resource" "inventory" {
@@ -57,7 +63,7 @@ resource "aws_instance" "ansible-hosts" {
   }
 }
 #----------------Inventory File--------------------------------------
-resource "null_resource" "inventory" {
+resource "null_resource" "inventory-file" {
   depends_on = [aws_instance.ansible-hosts]
   provisioner "local-exec" {
     on_failure = fail
