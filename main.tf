@@ -42,7 +42,7 @@ resource "null_resource" "Transfer_ssh" {
   depends_on = [null_resource.key]
   provisioner "local-exec" {
     on_failure = fail
-    command = "cd ~/.ssh"
+    command = "cd /home/ubuntu/.ssh/"
   }
   provisioner "local-exec" {
     on_failure = fail
@@ -50,7 +50,7 @@ resource "null_resource" "Transfer_ssh" {
   }
   provisioner "local-exec" {
     on_failure = fail
-    command = "sudo echo 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\n\tIdentityFile /home/ubuntu/.ssh/Jenkins-Server.pem' > /home/ubuntu/.ssh/config"
+    command = "sudo echo 'Host *\n\tStrictHostKeyChecking no\n\tUser ubuntu\n\tIdentityFile /home/ubuntu/.ssh/Jenkins-Server.pem' > config"
   }
 }
 #-----------------Ansibe Host---------------------------------------
