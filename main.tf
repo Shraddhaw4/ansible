@@ -34,7 +34,7 @@ resource "null_resource" "key" {
 resource "null_resource" "inventory" {
   provisioner "local-exec" {
     on_failure  = fail
-    command = "echo '[servers]' > /var/tmp/hosts"
+    command = "echo '[servers]' > hosts"
   }
 }
 #---------------Passwordless SSH----------------------------------
@@ -65,10 +65,10 @@ resource "aws_instance" "ansible-hosts" {
 }
 #----------------Inventory File--------------------------------------
 resource "null_resource" "inventory-file" {
-  depends_on = [aws_instance.ansible-hosts]
+  depends_on = [aws_instance.ansible-hosts,null_resource.inventory]
   provisioner "local-exec" {
     on_failure = fail
-    command = "echo ${aws_instance.ansible-hosts.tags["Name"]} ansible_host=${aws_instance.ansible-hosts.public_ip} ansible_connection=ssh ansible_user=ubuntu >> /var/tmp/hosts"
+    command = "echo ${aws_instance.ansible-hosts.tags["Name"]} ansible_host=${aws_instance.ansible-hosts.public_ip} ansible_connection=ssh ansible_user=ubuntu >> hosts"
   }
 }
 #--------------Ping--------------------------------------------------
@@ -76,6 +76,6 @@ resource "null_resource" "ping" {
   depends_on = [null_resource.inventory-file]
   provisioner "local-exec" {
     on_failure = fail
-    command = "ansible servers -m ping -i /var/tmp/hosts"
+    command = "ansible servers -m ping -i hosts"
   }
 }
