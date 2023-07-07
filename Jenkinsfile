@@ -18,7 +18,8 @@ pipeline {
                 credentialsId: 'PRI_KEY',
                 keyFileVariable: 'SSH_KEY')])
             {
-                sh 'sudo cp "$SSH_KEY" /home/ubuntu/.ssh/Jenkins-Server.pem'
+                sh 'sudo su - ubuntu'
+                sh 'cp "$SSH_KEY" /home/ubuntu/.ssh/Jenkins-Server.pem'
             }
         }
         }
