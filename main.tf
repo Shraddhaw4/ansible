@@ -71,11 +71,19 @@ resource "null_resource" "inventory-file" {
     command = "echo ${aws_instance.ansible-hosts.tags["Name"]} ansible_host=${aws_instance.ansible-hosts.public_ip} ansible_connection=ssh ansible_user=ubuntu >> hosts"
   }
 }
-#--------------Ping--------------------------------------------------
-resource "null_resource" "ping" {
+#--------------Copy host file----------------------------------------
+resource "null_resource" "Transfer_hosts" {
   depends_on = [null_resource.inventory-file]
   provisioner "local-exec" {
     on_failure = fail
-    command = "ansible servers -m ping -i hosts"
+    command = "sudo cp hosts /var/tmp/hosts"
+  }
+}
+#--------------Ping--------------------------------------------------
+resource "null_resource" "ping" {
+  depends_on = [null_resource.inventory-file, null_resource.Transfer_hosts]
+  provisioner "local-exec" {
+    on_failure = fail
+    command = "ansible servers -m ping -i /var/tmp/hosts"
   }
 }
