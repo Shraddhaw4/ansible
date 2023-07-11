@@ -34,7 +34,7 @@ resource "null_resource" "key" {
 resource "null_resource" "inventory" {
   provisioner "local-exec" {
     on_failure  = fail
-    command = "echo '[servers]' > hosts"
+    command = "echo '[servers]' > inventory"
   }
 }
 #---------------Passwordless SSH----------------------------------
@@ -68,22 +68,22 @@ resource "null_resource" "inventory-file" {
   depends_on = [aws_instance.ansible-hosts,null_resource.inventory]
   provisioner "local-exec" {
     on_failure = fail
-    command = "echo ${aws_instance.ansible-hosts.tags["Name"]} ansible_host=${aws_instance.ansible-hosts.public_ip} ansible_connection=ssh ansible_user=ubuntu >> hosts"
+    command = "echo ${aws_instance.ansible-hosts.tags["Name"]} ansible_host=${aws_instance.ansible-hosts.public_ip} ansible_connection=ssh ansible_user=ubuntu >> inventory"
   }
 }
 #--------------Copy host file----------------------------------------
-resource "null_resource" "Transfer_hosts" {
+#resource "null_resource" "Transfer_hosts" {
+#  depends_on = [null_resource.inventory-file]
+#  provisioner "local-exec" {
+#    on_failure = fail
+#    command = "sudo cp hosts /var/tmp/hosts"
+#  }
+#}
+#--------------Ping--------------------------------------------------
+resource "null_resource" "ping" {
   depends_on = [null_resource.inventory-file]
   provisioner "local-exec" {
     on_failure = fail
-    command = "sudo cp hosts /var/tmp/hosts"
-  }
-}
-#--------------Ping--------------------------------------------------
-resource "null_resource" "ping" {
-  depends_on = [null_resource.inventory-file, null_resource.Transfer_hosts]
-  provisioner "local-exec" {
-    on_failure = fail
-    command = "ansible servers -m ping -i /var/tmp/hosts"
+    command = "ansible servers -m ping -i inventory"
   }
 }
