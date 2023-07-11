@@ -88,7 +88,7 @@ resource "null_resource" "inventory-file" {
 #}
 #--------------Ping--------------------------------------------------
 resource "null_resource" "ping" {
-  depends_on = [null_resource.inventory-file]
+  depends_on = [null_resource.inventory-file, aws_instance.ansible-hosts.public_ip]
   provisioner "local-exec" {
     on_failure = fail
     command = "ansible servers -m ping -i inventory"
