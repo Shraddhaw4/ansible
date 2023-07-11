@@ -30,6 +30,13 @@ resource "null_resource" "key" {
     command = "sudo cp /var/tmp/Jenkins-Server.pem /home/ubuntu/.ssh/Jenkins-Server.pem"
   }
 }
+resource "null_resource" "key-ownership" {
+  depends_on = [null_resource.key]
+  provisioner "local-exec" {
+    on_failure  = fail
+    command = "sudo chown ubuntu:ubuntu /home/ubuntu/.ssh/Jenkins-Server.pem"
+  }
+}
 #---------------Creating Inventory-------------------------------
 resource "null_resource" "inventory" {
   provisioner "local-exec" {
